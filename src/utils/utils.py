@@ -50,7 +50,7 @@ def init_model(cnn_arch=list(INITIAL_UNITS.keys())[0],
     for i in range(0, h_l-1):
         li.append((f'hidden_layer{i}', nn.Linear(
             hidden_units_li[i], hidden_units_li[i+1])))
-        li.append((f'relu{i+1}', nn.ReLU()))
+        li.append((f'relu{i+2}', nn.ReLU()))
 
     # Replace the classifier
     classifier = nn.Sequential(
