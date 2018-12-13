@@ -1,5 +1,6 @@
 """Script to predict using pytorch model."""
 from datetime import datetime as dt
+from torch import transforms
 import Image
 import json
 import matplotlib.pyplot as plt
@@ -7,6 +8,7 @@ import numpy as np
 import re
 import sys
 import torch
+import torch.nn.functional as F
 
 from .utils import utils
 
@@ -54,11 +56,11 @@ def predict_image(filepath, model, topk=5):
     with torch.no_grad():
         if torch.cuda.is_available():
             model.cuda()
-            logps = model.forward(img_tensor.cuda())
+            output = model.forward(img_tensor.cuda())
         else:
-            logps = model.forward(img_tensor)
+            output = model.forward(img_tensor)
 
-    probability = torch.exp(logps)
+    probability = F.softmax(output.data, dim=1)
     top_probabilities, top_classes = probability.topk(topk, dim=1)
 
     # convert probs and classes to list
@@ -73,35 +75,17 @@ def process_image(image):
 
     Returns torch tensor of [3, 224, 224].'''
 
-    # configs
-    basewidth = 224
-    colors = 255
+    adjustments = transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
+            0.229, 0.224, 0.225])
+    ])
 
-    # centre crop and resize
-    width, height = image.size
-    new_width = new_height = min(width, height)
+    img_tensor = adjustments(image)
 
-    left = (width - new_width)/2
-    top = (height - new_height)/2
-    right = (width + new_width)/2
-    bottom = (height + new_height)/2
-
-    image = image.crop((left, top, right, bottom)
-                       ).resize((basewidth, basewidth))
-
-    # convert to array
-    img_arr = np.array(image)
-
-    # normalize by to 0 and 1
-    img_arr = img_arr / float(colors)
-
-    # normalize by specific method
-    mean = np.array([0.485, 0.456, 0.406])
-    std = np.array([0.229, 0.224, 0.225])
-    img_arr = (img_arr - mean) / std
-
-    # rearrange
-    return torch.tensor(img_arr.transpose((2, 0, 1))).unsqueeze_(0).float()
+    return img_tensor
 
 
 def plot_img_metrics(filename, filepath, probs, classes, dictionary):
