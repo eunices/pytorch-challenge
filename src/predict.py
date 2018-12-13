@@ -45,7 +45,7 @@ def load_dictionary(filepath):
     return cat_to_name
 
 
-def predict_image(filepath, model, topk=5):
+def predict_image(filepath, model, dictionary, topk=5):
     """Make prediction for an image."""
     # Open and preprocess image
     image = Image.open(filepath)
@@ -60,12 +60,13 @@ def predict_image(filepath, model, topk=5):
         else:
             output = model.forward(img_tensor)
 
-    probability = F.softmax(output.data, dim=1)
+    probability = torch.exp(output)
     top_probabilities, top_classes = probability.topk(topk, dim=1)
 
     # convert probs and classes to list
     top_probabilities = list(top_probabilities.cpu().numpy()[0])
     top_classes = list(top_classes.cpu().numpy()[0])
+    top_classes = [dictionary[x] for x in top_classes]
 
     return top_probabilities, top_classes
 
@@ -130,6 +131,8 @@ if __name__ == '__main__':
     # Load model
     print(f'{dt.now()} Loading model.')
     model = load_model('model_checkpoint.pth')
+    dict_map = model.class_to_idx
+    dict_map_inv = {v: k for k, v in dict_map.items()}
 
     # Open dictionary
     print(f'{dt.now()} Loading dictionary.')
@@ -137,7 +140,8 @@ if __name__ == '__main__':
 
     # Predict
     print(f'{dt.now()} Making prediction for image.')
-    top_probabilities, top_classes = predict_image('filename', './', 5)
+    top_probabilities, top_classes = predict_image(
+        'filename', './', dict_map_inv, 5)
 
     # Plotting metrics
     print(f'{dt.now()} Plotting metrics for image.')
