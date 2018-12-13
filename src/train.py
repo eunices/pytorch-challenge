@@ -71,7 +71,9 @@ def load_data(folder_path, train_batch_size=5, valid_batch_size=5):
     print(f'Number of classes in training data: {classes}')
     print(f'Total number of training examples: {sum(class_counter.values())}')
 
-    return dataloaders_train, dataloaders_valid, image_datasets_train.class_to_idx, classes
+    class_to_idx = image_datasets_train.class_to_idx
+
+    return dataloaders_train, dataloaders_valid, class_to_idx, classes
 
 
 def train_model(model,
@@ -144,7 +146,7 @@ def train_model(model,
 
                 # Print
                 validation_size = len(valid_dataloader)
-                print(f'Epoch {epoch+1}/{epochs}..'
+                print(f'{dt.now()} Epoch {epoch+1}/{epochs}..'
                       f'Train loss: {running_loss/print_every_step: .3f}..'
                       f'Validation loss: {valid_loss/validation_size: .3f}..'
                       f'Validation accuracy: {accuracy/validation_size: .3f}..')
@@ -158,12 +160,17 @@ def train_model(model,
     print(f'{dt.now()} Model training has ended.')
 
 
-def save_model(model, class_to_idx, cnn_arch, hidden_units_li, dropout, learning_rate, output_classes,
+def save_model(model, cnn_arch, hidden_units_li, dropout, learning_rate, output_classes,
+               class_to_idx,
                filepath=MODEL_FILEPATH):
     """Saves model parameters to path."""
     model.cpu()
+
+    idx_to_class = {v: k for k, v in class_to_idx.items()}
+
     checkpoint = {
-        'class_to_idx': class_to_idx,
+        'idx_to_class': idx_to_class,
+        'output_classes': output_classes,
         'cnn_arch': cnn_arch,
         'hidden_units_li': hidden_units_li,
         'dropout': dropout,
@@ -195,5 +202,5 @@ if __name__ == '__main__':
 
     # Save model
     print(f'{dt.now()} Saving model.')
-    save_model(model, class_to_idx, 'vgg16', HIDDEN_UNITS_LI,
-               DROPOUT, LEARNING_RATE, classes)
+    save_model(model, 'vgg16', HIDDEN_UNITS_LI,
+               DROPOUT, LEARNING_RATE, classes, class_to_idx)

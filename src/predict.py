@@ -8,7 +8,6 @@ import numpy as np
 import re
 import sys
 import torch
-import torch.nn.functional as F
 
 from .utils import utils
 
@@ -22,7 +21,7 @@ def load_model(filename, filepath=MODEL_FILEPATH):
     ckpt = torch.load(f'{filepath}/{filename}')
 
     print(f'Model loaded.')
-    print(ckpt)
+    print(ckpt.keys())
 
     # Initialize model
     model, _, _ = utils.init_model(ckpt['cnn_arch'],
@@ -32,7 +31,7 @@ def load_model(filename, filepath=MODEL_FILEPATH):
                                    ckpt['learning_rate'])
 
     # Initialize class_to_idx and weights
-    model.class_to_idx = ckpt['class_to_idx']
+    model.idx_to_class = ckpt['idx_to_class']
     model.load_state_dict(ckpt['state_dict'])
 
     return model
@@ -45,7 +44,7 @@ def load_dictionary(filepath):
     return cat_to_name
 
 
-def predict_image(filepath, model, dictionary, topk=5):
+def predict_image(filepath, model, topk=5):
     """Make prediction for an image."""
     # Open and preprocess image
     image = Image.open(filepath)
@@ -66,7 +65,7 @@ def predict_image(filepath, model, dictionary, topk=5):
     # convert probs and classes to list
     top_probabilities = list(top_probabilities.cpu().numpy()[0])
     top_classes = list(top_classes.cpu().numpy()[0])
-    top_classes = [dictionary[x] for x in top_classes]
+    top_classes = [model.idx_to_class[x] for x in top_classes]
 
     return top_probabilities, top_classes
 
@@ -131,8 +130,6 @@ if __name__ == '__main__':
     # Load model
     print(f'{dt.now()} Loading model.')
     model = load_model('model_checkpoint.pth')
-    dict_map = model.class_to_idx
-    dict_map_inv = {v: k for k, v in dict_map.items()}
 
     # Open dictionary
     print(f'{dt.now()} Loading dictionary.')
@@ -140,8 +137,7 @@ if __name__ == '__main__':
 
     # Predict
     print(f'{dt.now()} Making prediction for image.')
-    top_probabilities, top_classes = predict_image(
-        'filename', './', dict_map_inv, 5)
+    top_probabilities, top_classes = predict_image('filename', './', 5)
 
     # Plotting metrics
     print(f'{dt.now()} Plotting metrics for image.')
