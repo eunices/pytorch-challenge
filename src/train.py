@@ -2,11 +2,12 @@
 from collections import Counter
 from datetime import datetime as dt
 from torchvision import (models, transforms, datasets)
-import torch.utils.data as data
 import torch
+import torch.utils.data as data
 
 from .utils import utils
 from .utils.utils import (
+    HIDDEN_UNITS_LI,
     DROPOUT,
     LEARNING_RATE,
     HIDDEN_UNITS,
@@ -178,16 +179,21 @@ if __name__ == '__main__':
 
     # Load test and train data data
     print(f'{dt.now()} Loading test and train data.')
-    # load_data()
+    dataloaders_train, dataloaders_valid, class_to_idx, classes = load_data(
+        './data', 128, 64)
 
     # Initialize model
     print(f'{dt.now()} Initializing model of choice.')
-    # utils.init_model()
+    model, criterion, optimizer = \
+        utils.init_model('vgg16', DROPOUT, HIDDEN_UNITS_LI,
+                         classes, LEARNING_RATE)
 
     # Train model
     print(f'{dt.now()} Train model.')
-    # train_model()
+    train_model(model, criterion, optimizer,
+                dataloaders_train, dataloaders_valid)
 
     # Save model
     print(f'{dt.now()} Saving model.')
-    # save_model()
+    save_model(model, class_to_idx, 'vgg16', HIDDEN_UNITS_LI,
+               DROPOUT, LEARNING_RATE, classes)

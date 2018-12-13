@@ -1,8 +1,8 @@
 """Utils for train and predict scripts."""
-from datetime import datetime as dt
-from torchvision import models
-from torch import nn, optim
 from collections import OrderedDict
+from datetime import datetime as dt
+from torch import nn, optim
+from torchvision import models
 import random
 import string
 import torch

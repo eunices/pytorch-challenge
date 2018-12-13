@@ -1,12 +1,12 @@
 """Script to predict using pytorch model."""
 from datetime import datetime as dt
-import torch
-import json
 import Image
+import json
+import matplotlib.pyplot as plt
 import numpy as np
 import re
-import matplotlib.pyplot as plt
 import sys
+import torch
 
 from .utils import utils
 
