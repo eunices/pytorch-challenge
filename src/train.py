@@ -184,16 +184,31 @@ def save_model(model, cnn_arch, hidden_units_li, dropout, learning_rate, output_
 
 if __name__ == '__main__':
 
+    params = {
+        'data_filepath': './data/flower_data',
+        'train_batch_size': 128,
+        'validation_batch_size': 64,
+        'model_arch': 'vgg16',
+        'dropout': DROPOUT,
+        'hidden_units_li': HIDDEN_UNITS_LI,
+        'learning_rate': LEARNING_RATE,
+    }
+
     # Load test and train data data
     print(f'{dt.now()} Loading test and train data.')
     dataloaders_train, dataloaders_valid, class_to_idx, classes = load_data(
-        './data', 128, 64)
+        params['data_filepath'],
+        params['train_batch_size'],
+        params['validation_batch_size'])
 
     # Initialize model
     print(f'{dt.now()} Initializing model of choice.')
     model, criterion, optimizer = \
-        utils.init_model('vgg16', DROPOUT, HIDDEN_UNITS_LI,
-                         classes, LEARNING_RATE)
+        utils.init_model(params['model_arch'],
+                         params['dropout'],
+                         params['hidden_units_li'],
+                         classes,
+                         params['learning_rate'])
 
     # Train model
     print(f'{dt.now()} Train model.')
@@ -201,6 +216,11 @@ if __name__ == '__main__':
                 dataloaders_train, dataloaders_valid)
 
     # Save model
-    print(f'{dt.now()} Saving model.')
-    save_model(model, 'vgg16', HIDDEN_UNITS_LI,
-               DROPOUT, LEARNING_RATE, classes, class_to_idx)
+    print(f'{dt.now()} Saving model weights, hyperparameters and maps.')
+    save_model(model,
+               params['model_arch'],
+               params['hidden_units_li'],
+               params['dropout'],
+               params['learning_rate'],
+               classes,
+               class_to_idx)

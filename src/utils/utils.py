@@ -46,22 +46,24 @@ def init_model(cnn_arch=list(INITIAL_UNITS.keys())[0],
 
     h_l = len(hidden_units_li)
 
-    li = []
+    h_l_li = []
     for i in range(0, h_l-1):
-        li.append((f'hidden_layer{i}', nn.Linear(
+        h_l_li.append((f'hidden_layer{i+1}', nn.Linear(
             hidden_units_li[i], hidden_units_li[i+1])))
-        li.append((f'relu{i+2}', nn.ReLU()))
+        h_l_li.append((f'relu{i+2}', nn.ReLU()))
+
+    initial_layer = [('dropout', nn.Dropout(dropout)),
+                     ('inputs', nn.Linear(
+                         INITIAL_UNITS[cnn_arch], hidden_units_li[0])),
+                     ('relu1', nn.ReLU())]
+
+    final_layer = [(f'hidden_layer{h_l}', nn.Linear(hidden_units_li[h_l-1], output_classes)),
+                   ('output', nn.LogSoftmax(dim=1))]
 
     # Replace the classifier
     classifier = nn.Sequential(
         OrderedDict(
-            [('dropout', nn.Dropout(dropout)),
-             ('inputs', nn.Linear(
-                 INITIAL_UNITS[cnn_arch], hidden_units_li[0])),
-             ('relu1', nn.ReLU())] +
-            li +
-            [('hidden_layer3', nn.Linear(hidden_units_li[h_l-1], output_classes)),
-             ('output', nn.LogSoftmax(dim=1))]
+            initial_layer + h_l_li + final_layer
         )
     )
 

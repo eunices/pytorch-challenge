@@ -71,21 +71,39 @@ def predict_image(filepath, model, topk=5):
 
 
 def process_image(image):
-    ''' Scale, crop, and normalize a PIL image for a PyTorch model.
+    ''' Scales, crops, and normalizes a PIL image for a PyTorch model,
+        returns an Numpy array
+    '''
 
-    Returns torch tensor of [3, 224, 224].'''
+    # configs
+    basewidth = 224
+    colors = 255
 
-    adjustments = transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
-            0.229, 0.224, 0.225])
-    ])
+    # centre crop and resize
+    width, height = image.size
+    new_width = new_height = min(width, height)
 
-    img_tensor = adjustments(image)
+    left = (width - new_width)/2
+    top = (height - new_height)/2
+    right = (width + new_width)/2
+    bottom = (height + new_height)/2
 
-    return img_tensor
+    image = image.crop((left, top, right, bottom)
+                       ).resize((basewidth, basewidth))
+
+    # convert to array
+    img_arr = np.array(image)
+
+    # normalize by to 0 and 1
+    img_arr = img_arr / float(colors)
+
+    # normalize by specific method
+    mean = np.array([0.485, 0.456, 0.406])
+    std = np.array([0.229, 0.224, 0.225])
+    img_arr = (img_arr - mean) / std
+
+    # rearrange
+    return torch.tensor(img_arr.transpose((2, 0, 1)))
 
 
 def plot_img_metrics(filename, filepath, probs, classes, dictionary):
@@ -127,19 +145,30 @@ def plot_img_metrics(filename, filepath, probs, classes, dictionary):
 if __name__ == '__main__':
     # utils.test()
 
+    params = {
+        'model_filename': 'model_checkpoint.pth',
+        'dictionary_filepath': './',
+        'pimage_filename': 'filename',
+        'pimage_filepath': './'
+    }
+
     # Load model
     print(f'{dt.now()} Loading model.')
-    model = load_model('model_checkpoint.pth')
+    model = load_model(params['model_filename'])
 
     # Open dictionary
     print(f'{dt.now()} Loading dictionary.')
-    cat_to_name = load_dictionary('./')
+    cat_to_name = load_dictionary(params['model_filename'])
 
     # Predict
     print(f'{dt.now()} Making prediction for image.')
-    top_probabilities, top_classes = predict_image('filename', './', 5)
+    top_probabilities, top_classes = predict_image(
+        params['pimage_filename'],
+        params['pimage_filepath'],
+        5)
 
     # Plotting metrics
     print(f'{dt.now()} Plotting metrics for image.')
-    plot_img_metrics('filename', './predict',
+    plot_img_metrics(params['pimage_filename'],
+                     params['pimage_filepath'],
                      top_probabilities, top_classes, cat_to_name)
